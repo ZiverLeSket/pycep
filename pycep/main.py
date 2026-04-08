@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from importlib.resources import files
 from typing import TYPE_CHECKING
 
@@ -15,6 +16,29 @@ if TYPE_CHECKING:
 
 
 LARK_GRAMMAR = (files(__package__) / "bicep.lark").read_text()  # ty: ignore[invalid-argument-type] # can't be `None` here
+
+# Matches a line that contains only whitespace then ? (not ??) or : (not ::)
+# Used to normalize multi-line ternary expressions onto a single line.
+_TERNARY_CONTINUATION = re.compile(r"\n[ \t]+(\?(?!\?))|\n[ \t]+(:(?!:))")
+# Splits text into multi-line string segments vs normal code segments.
+# Group 1 captures '''...''' content (must not be replaced); group 2 captures everything else.
+_MULTILINE_STRING_SPLIT = re.compile(r"('''.*?''')", re.DOTALL)
+
+
+def _normalize_multiline_ternary(text: str) -> str:
+    """Join continuation lines starting with `?` or `:` (ternary branches) onto the previous line.
+
+    Multi-line string literals ('''...''') are left untouched.
+    """
+    parts = _MULTILINE_STRING_SPLIT.split(text)
+    result = []
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            # Odd parts are multi-line string literals - preserve them verbatim.
+            result.append(part)
+        else:
+            result.append(_TERNARY_CONTINUATION.sub(lambda m: " " + (m.group(1) or m.group(2)), part))
+    return "".join(result)
 
 
 class BicepParser:
@@ -49,4 +73,5 @@ class BicepParser:
 
             raise ValueError("Text is invalid")
 
+        bicep_text = _normalize_multiline_ternary(bicep_text)
         return self.lark_parser.parse(bicep_text)

@@ -51,13 +51,13 @@ child_resource: "resource" STRING QUOTED_INTERPOLATION [EXISTING] "=" (object | 
 
 // element type extras
 
-data_type: STRING
+data_type: (TYPED_ARRAY | STRING | QUOTED_INTERPOLATION) ("|" (TYPED_ARRAY | STRING | QUOTED_INTERPOLATION))*
 
 type_api_pair: QUOTED_INTERPOLATION
 
 module_path: QUOTED_INTERPOLATION
 
-import_alias: (STRING | /\*/) ["as" STRING]
+import_alias: ["type"] (STRING | /\*/) ["as" STRING]
 
 // loops
 
@@ -169,7 +169,8 @@ property_accessor: value_brackets "." "?"? value_brackets
 
 EXISTING: "existing"
 
-STRING: /(?!(sys|az)\.)[a-zA-Z_]([\w_])*/
+TYPED_ARRAY.2: /(?!(sys|az)\.)[a-zA-Z_][\w_]*\[\]/
+STRING: /(?!(sys|az)\.)([a-zA-Z_]([\w_])*)/
 QUOTED_STRING: "'" /[a-zA-Z_]([\w_.])*/ "'"
 INDEXED: /(?=[\w][\w_.]+(.(get|list)[a-zA-Z]*\(('[\w-]+'|[\w.]+)?\)|[\[\]])+)(.(get|list)[a-zA-Z]*\(('[\w-]+'|[\w.]+)?\)|\[[\w\[\]_().']+\]|[\w_\-\/.,'= ])+/
 QUOTED_INTERPOLATION: /(?!.*''')'(\${(?:[^}'{]+|(?R))*+}|\\'|[^'])*'/

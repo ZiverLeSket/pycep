@@ -396,8 +396,8 @@ class BicepToJson(Transformer[Token, pycep_typing.BicepJson]):
     #
     ####################
 
-    def data_type(self, arg: tuple[Token]) -> str:
-        return str(arg[0])
+    def data_type(self, args: tuple[Token | str, ...]) -> str:
+        return " | ".join(str(arg) for arg in args)
 
     def type_api_pair(self, args: tuple[Token, Token]) -> pycep_typing.ApiTypeVersion:
         type_name, api_version = str(args[0])[1:-1].split("@")
